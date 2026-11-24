@@ -7,7 +7,7 @@ pipeline {
     }
 
     environment {
-        IMAGE = 'farahcherif/gestion-projets-backend'
+        IMAGE = 'farahcherif16/gestion-projets-backend'
     }
 
     stages {
