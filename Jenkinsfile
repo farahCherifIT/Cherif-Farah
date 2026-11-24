@@ -6,6 +6,10 @@ pipeline {
         jdk 'JAVA_HOME'
     }
 
+    environment {
+        IMAGE = 'farahcherif/gestion-projets-backend'
+    }
+
     stages {
         stage('Checkout') {
             steps {
@@ -21,6 +25,40 @@ pipeline {
                     sh 'mvn clean compile'
                 }
             }
+        }
+
+        stage('Package') {
+            steps {
+                dir('backend') {
+                    sh 'mvn package -DskipTests'
+                }
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                dir('backend') {
+                    sh "docker build -t ${IMAGE}:${BUILD_NUMBER} -t ${IMAGE}:latest ."
+                }
+            }
+        }
+
+        stage('Docker Push') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds',
+                                                  usernameVariable: 'DOCKER_USER',
+                                                  passwordVariable: 'DOCKER_PASS')]) {
+                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+                    sh "docker push ${IMAGE}:${BUILD_NUMBER}"
+                    sh "docker push ${IMAGE}:latest"
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            sh 'docker logout || true'
         }
     }
 }
